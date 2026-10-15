@@ -67,6 +67,7 @@ Setelah melakukan konfigurasi di keduanya sekarang kita akan melakukan verifikas
 ls -l /var/lib/bind/
 ```
 ![alt text](<dokumentasi/foto 1.png>)
+
 Sekarang lakukan verifikasi di `itadori / kusakabe`
 ```bash
 # Memasang bind-tools jika perintah dig belum tersedia di Alpine
@@ -284,11 +285,13 @@ Setelah itu coba lakukan verifikasi status slave di `inumaki`
 mariadb -u root -e "SHOW SLAVE STATUS\G"
 ```
 ![alt text](<dokumentasi/foto 5.png>)
+
 Sekarang kita lanjut melakukan verifikasi di `inumaki` dengan script
 ```bash
 mariadb -u root -e "SELECT * FROM \`db_shibuya_K-27\`.request_logs;"
 ```
 ![alt text](<dokumentasi/foto 6.png>)
+
 Kita lanjutkan verifikasi di user node lain seperti `geto / nanami`
 ```bash
 mariadb -h 10.77.4.17 -u worker -ppassword123 -e "SHOW DATABASES;"

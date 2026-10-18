@@ -282,6 +282,7 @@ Setelah melakukan konfigurasi di keduanya sekarang kita akan melakukan verifikas
 ```bash
 ls -l /var/lib/bind/
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 1.png>)
 
 Sekarang lakukan verifikasi di `itadori / kusakabe`
@@ -295,6 +296,7 @@ dig @10.77.1.2 jujutsu.K-27.com NS
 # Uji query ke Slave (shoko)
 dig @10.77.1.3 jujutsu.K-27.com NS
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 2.png>)
 ![alt text](<dokumentasi/foto 3.png>)
 
@@ -402,6 +404,7 @@ EOF
 chmod +x /root/test_soal12.sh
 /root/test_soal12.sh
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 4.png>)
 
 ## Soal 13
@@ -500,18 +503,21 @@ Setelah itu coba lakukan verifikasi status slave di `inumaki`
 ```bash\
 mariadb -u root -e "SHOW SLAVE STATUS\G"
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 5.png>)
 
 Sekarang kita lanjut melakukan verifikasi di `inumaki` dengan script
 ```bash
 mariadb -u root -e "SELECT * FROM \`db_shibuya_K-27\`.request_logs;"
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 6.png>)
 
 Kita lanjutkan verifikasi di user node lain seperti `geto / nanami`
 ```bash
 mariadb -h 10.77.4.17 -u worker -ppassword123 -e "SHOW DATABASES;"
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 7.png>)
 ![alt text](<dokumentasi/foto 8.png>)
 
@@ -702,7 +708,8 @@ curl -I http://10.77.4.12/
 
 # Coba akses langsung ke nanami (API)
 curl -I http://10.77.4.14/
-``` 
+```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 9.png>)
 ![alt text](<dokumentasi/foto 10.png>)
 
@@ -711,6 +718,7 @@ curl -I http://10.77.4.14/
 curl -s http://10.77.4.12/ | grep "Handled by Worker"
 curl -s http://10.77.4.13/ | grep "Handled by Worker"
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 11.png>)
 
 3. Uji akses API di `geto`
@@ -719,12 +727,14 @@ curl -s http://10.77.4.14/
 curl -s http://10.77.4.15/
 curl -s http://10.77.4.16/
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 12.png>)
 
 4. Periksa catatan log di `yaga`
 ```bash
 mariadb -u root -e "SELECT * FROM \`db_shibuya_K-27\`.request_logs ORDER BY id DESC LIMIT 3;"
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 13.png>)
 
 ## Soal 15
@@ -818,6 +828,7 @@ EOF
 chmod +x /root/test_soal15.sh
 /root/test_soal15.sh
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 14.png>)
 
 ## Soal 16
@@ -921,6 +932,7 @@ EOF
 chmod +x /root/test_soal16.sh
 /root/test_soal16.sh
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 15.png>)
 ![alt text](<dokumentasi/foto 16.png>)
 
@@ -1084,6 +1096,7 @@ ip -4 addr show eth0 | grep inet
 # Kirim request ke endpoint /api/
 curl -s http://jujutsu.K-27.com/api/
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 17.png>)
 
 2. Kirim request dari `kusakabe`
@@ -1094,12 +1107,14 @@ ip -4 addr show eth0 | grep inet
 # Kirim request ke endpoint /api/
 curl -s http://jujutsu.K-27.com/api/
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 18.png>)
 
 3. Verifikasi isi tabel basis data di `yaga`
 ```bash
 mariadb -u root -e "SELECT id, client_ip, endpoint, request_time FROM \`db_shibuya_K-27\`.request_logs ORDER BY id DESC LIMIT 5;"
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 19.png>)
 
 ## Soal 18
@@ -1176,12 +1191,14 @@ for i in $(seq 1 4); do
     curl -s http://jujutsu.K-27.com/api/ | grep -o '"worker": "[^"]*"'
 done
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 20.png>)
 
 2. Simulasi gangguan dengan mematikan Nginx di `nanami & todo`
 ```bash
 service nginx stop
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 21.png>)
 ![alt text](<dokumentasi/foto 22.png>)
 
@@ -1202,12 +1219,14 @@ EOF
 chmod +x /root/test_failover.sh
 /root/test_failover.sh
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 23.png>)
 
 4. Pulihkan kembali Nginx di `nanami & todo`
 ```bash
 service nginx start
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 24.png>)
 ![alt text](<dokumentasi/foto 25.png>)
 
@@ -1317,6 +1336,7 @@ EOF
 chmod +x /root/test_soal19_fix.sh
 /root/test_soal19_fix.sh
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 26.png>)
 
 ## Soal 20
@@ -1343,12 +1363,14 @@ Kemudian kita lakukan beberapa langkah verifikasi pada beberapa node:
 ```bash
 ab -n 600 -c 30 http://jujutsu.K-27.com/
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 27.png>)
 
 2. mengeksekusi benchmark endpoint API di `kusakabe`
 ```bash
 ab -n 600 -c 30 http://jujutsu.K-27.com/api/
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 28.png>)
 
 3. Audit Access Log dan Error Log di `gojo`
@@ -1359,4 +1381,5 @@ tail -n 20 /var/log/nginx/error.log | grep "limiting requests"
 
 grep -E " 502 | 504 " /var/log/nginx/access.log | wc -l
 ```
+# Dokumentasi
 ![alt text](<dokumentasi/foto 29.png>)

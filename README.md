@@ -7,6 +7,222 @@
 | Muhammad Nadhif Pasya Ikhsan | 5027251084 |
 | Akhdan Hafiz Anugrah | 5027251094 |
 
+## Soal 1 — Konfigurasi Jaringan
+
+Jichi menggunakan eth0 sebagai WAN DHCP dan eth1–eth4 sebagai gateway `10.77.1.1` sampai `10.77.4.1`, seluruhnya `/24`. IPv4 forwarding dan NAT MASQUERADE diaktifkan. Host infrastruktur menggunakan IP statis; tengen menggunakan `10.77.4.10/24` dengan gateway `10.77.4.1`.
+
+```sh
+# Jichi
+sh /root/nomor1-jichi.sh
+# Tengen; host lain menjalankan script sesuai nama node
+sh /root/nomor1-tengen.sh
+```
+
+Pengujian dilakukan dengan memeriksa `ip addr`, `ip route`, serta ping dari setiap host ke gateway dan alamat eksternal yang relevan.
+
+### Dokumentasi
+![alt text](dokumentasi/image-1.png)
+
+## Soal 2 — DHCP Server
+
+ISC DHCP Server dipasang pada tengen. Network 4 dideklarasikan tanpa pool dinamis, sedangkan Network 2 dan 3 menyediakan alamat untuk client.
+
+```sh
+# Tengen
+sh /root/nomor2-dhcp-server.sh
+dhcpd -t -cf /etc/dhcp/dhcpd.conf
+service isc-dhcp-server status
+```
+
+Validasi harus bebas error, termasuk `No subnet declaration`.
+
+### Dokumentasi
+
+![alt text](dokumentasi/image.png)
+
+## Soal 3 — DHCP Relay
+
+Jichi meneruskan permintaan DHCP dari eth2 dan eth3 ke tengen `10.77.4.10` melalui eth4. Client Alpine menggunakan DHCP pada eth0.
+
+```sh
+# Jichi
+sh /root/nomor3-dhcp-relay.sh
+# Setiap client Alpine
+sh /root/nomor3-client.sh
+```
+
+Periksa alamat dan routing client dengan `ip addr` serta `ip route`. Client harus memperoleh alamat sesuai subnetnya dan dapat menjangkau gateway.
+
+### Dokumentasi
+
+![alt text](dokumentasi/image-2.png)
+
+![alt text](dokumentasi/image-3.png)
+
+
+## Soal 4 — Pemisahan Pool Network 2
+
+DHCP class berdasarkan MAC Address digunakan untuk membatasi alokasi:
+
+| Client | Pool |
+| --- | --- |
+| itadori, fushiguro | 10.77.2.10–10.77.2.35 |
+| zenin, okkotsu | 10.77.2.70–10.77.2.95 |
+
+```sh
+# Tengen
+sh /root/nomor4-pool.sh
+# Renew pada keempat client
+sh /root/nomor3-client.sh
+```
+
+Cocokkan IP dengan pool masing-masing. Rentang `10.77.2.36–10.77.2.69` tidak dialokasikan.
+
+### Dokumentasi
+
+![Jarkom-Modul-3-2026-K-27/dokumentasi/image-4.png](dokumentasi/image-4.png)
+
+## Soal 5 — Durasi Lease Network 3
+
+| Client | Pool | Lease |
+| --- | --- | --- |
+| ino, kusakabe | 10.77.3.10–10.77.3.89 | 1800 detik |
+| miwa | 10.77.3.100–10.77.3.199 | 43200 detik |
+
+Client menerima DNS `10.77.1.2`, `10.77.1.3`, dan domain-search `K27.com`.
+
+```sh
+# Tengen
+sh /root/nomor5-lease.sh
+# Renew pada client terkait
+sh /root/nomor3-client.sh
+cat /etc/resolv.conf
+```
+
+Periksa pool, DNS, dan durasi lease melalui lease server atau DHCPACK.
+
+### Dokumentasi
+
+![alt text](dokumentasi/image-6.png)
+
+![alt text](dokumentasi/image-7.png)
+
+![alt text](dokumentasi/image-8.png)
+
+
+## Soal 6 — Reservasi Kugisaki
+
+Kugisaki memperoleh fixed address `10.77.3.99` berdasarkan MAC Address. Alamat tersebut berada di luar seluruh pool dinamis.
+
+```sh
+# Tengen
+sh /root/nomor6-reservasi.sh
+dhcpd -t -cf /etc/dhcp/dhcpd.conf
+# Kugisaki
+sh /root/nomor3-client.sh
+ip -4 addr show eth0
+```
+
+Setelah renew, kugisaki harus tetap memperoleh `10.77.3.99/24`.
+
+### Dokumentasi
+
+![alt text](dokumentasi/image-10.png)
+
+## Soal 7 — Verifikasi Client
+
+Periksa seluruh client: IP sesuai pool, mask `/24`, gateway `10.77.2.1` atau `10.77.3.1`, broadcast sesuai subnet, serta DNS dan domain-search sesuai konfigurasi.
+
+```sh
+# Setiap client
+sh /root/nomor7-check.sh
+# Tengen
+sh /root/nomor7-check-server.sh
+cat /var/lib/dhcp/dhcpd.leases
+```
+
+Cocokkan MAC dan lease aktif; pastikan tidak ada IP duplikat. Reservasi kugisaki dibuktikan melalui konfigurasi host dan IP client karena fixed address tidak harus muncul dalam daftar lease dinamis.
+
+
+## Soal 8 — Capture DORA
+
+Capture dijalankan pada tengen, kemudian salah satu client meminta lease baru.
+
+```sh
+# Tengen: mulai capture
+sh /root/nomor8-capture.sh capture
+# Client: minta lease baru
+sh /root/nomor3-client.sh
+# Tengen: setelah menghentikan capture dengan Ctrl+C
+sh /root/nomor8-capture.sh baca
+```
+
+Identifikasi urutan **DISCOVER → OFFER → REQUEST → ACK**, server `10.77.4.10`, alamat yang diberikan, dan lease time. Nilai `giaddr` harus `10.77.2.1` untuk Network 2 atau `10.77.3.1` untuk Network 3.
+
+### Dokumentasi
+
+![alt text](<dokumentasi/Screenshot 2026-10-13 143024.png>)
+
+![alt text](<dokumentasi/Screenshot 2026-10-13 143035.png>)
+
+## Soal 9 — Simulasi Gangguan Relay
+
+Hentikan relay, lalu lakukan permintaan DHCP baru pada satu client. Script client membersihkan alamat lama agar kegagalan memperoleh lease terlihat.
+
+```sh
+# Jichi
+sh /root/nomor9-relay.sh stop
+# Client pengujian
+sh /root/nomor9-uji-client.sh gangguan
+# Jichi
+sh /root/nomor9-relay.sh start
+# Client pengujian
+sh /root/nomor9-uji-client.sh pulih
+```
+
+Saat relay berhenti, permintaan lease baru gagal. Setelah relay aktif, client harus memperoleh alamat dari pool yang benar dengan gateway semula.
+
+### Dokumentasi
+
+![alt text](dokumentasi/image-11.png)
+
+![alt text](dokumentasi/image-12.png)
+
+## Soal 10 — Autostart
+
+Pada **jichi dan tengen**, jalankan script milik masing-masing node:
+
+```sh
+sh /root/nomor10-pasang-autostart.sh
+```
+
+Atur **Start command** kedua node di GNS3:
+
+```sh
+/bin/sh -c '/bin/sh /root/nomor10-autostart.sh >> /root/nomor10-boot.log 2>&1; exec /bin/bash'
+```
+
+Lakukan Stop/Start kedua node, lalu periksa layanan tanpa menyalakannya secara manual:
+
+```sh
+# Jichi
+service isc-dhcp-relay status
+# Tengen
+service isc-dhcp-server status
+# Setiap client setelah server siap
+sh /root/nomor3-client.sh
+sh /root/nomor7-check.sh
+```
+
+Pastikan pool, durasi lease, reservasi kugisaki, dan konektivitas tetap sesuai. Script konfigurasi nomor 1–6 tidak perlu diulang jika autostart berhasil.
+
+## Dokumentasi
+
+![alt text](<dokumentasi/Screenshot 2026-10-13 145055.png>)
+
+![alt text](<dokumentasi/Screenshot 2026-10-13 145121.png>)
+
+
 
 ## Soal 11
 Utahime dan Shoko ditugaskan membangun sistem penamaan domain resmi agar seluruh pos tidak perlu menghafal alamat IP mentah. Konfigurasikan BIND9 pada utahime sebagai DNS Master dan shoko sebagai DNS Slave untuk mengelola domain jujutsu.<xxxx>.com. Atur SOA record, NS delegasi untuk kedua server, dan terapkan allow-transfer dari Master ke Slave. Pastikan file zona berhasil tersinkronisasi otomatis ke shoko saat nomor serial di utahime dinaikkan, lalu buktikan dengan melakukan query dig ke kedua server dari salah satu client.
